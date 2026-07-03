@@ -54,7 +54,7 @@ public sealed class SaveOnlyTests
 
         var customer = new Customer { Name = "Alice", Email = "alice@example.com" };
 
-        await db.SaveOnlyAsync(s => s.Save(customer));
+        await db.SaveOnlyAsync(s => s.Row(customer));
 
         Assert.AreNotEqual(0, customer.Id, "Id should be set by the database after insert.");
 
@@ -75,10 +75,10 @@ public sealed class SaveOnlyTests
         await using var db = await CreateFreshDbAsync();
 
         var customer = new Customer { Name = "Bob", Email = "bob@old.com" };
-        await db.SaveOnlyAsync(s => s.Save(customer));
+        await db.SaveOnlyAsync(s => s.Row(customer));
 
         customer.Email = "bob@new.com";
-        await db.SaveOnlyAsync(s => s.Save(customer));
+        await db.SaveOnlyAsync(s => s.Row(customer));
 
         await using var readDb = CreateDb();
         var saved = await readDb.Customers.FindAsync(customer.Id);
@@ -96,12 +96,12 @@ public sealed class SaveOnlyTests
         await using var db = await CreateFreshDbAsync();
 
         var product = new Product { Name = "Widget", Price = 9.99m, StockQuantity = 100 };
-        await db.SaveOnlyAsync(s => s.Save(product));
+        await db.SaveOnlyAsync(s => s.Row(product));
 
         product.Price = 14.99m;
         product.Name = "Widget (SHOULD NOT CHANGE)";
 
-        await db.SaveOnlyAsync(s => s.Save(product, nameof(Product.Price)));
+        await db.SaveOnlyAsync(s => s.Row(product, nameof(Product.Price)));
 
         await using var readDb = CreateDb();
         var saved = await readDb.Products.FindAsync(product.Id);
@@ -122,7 +122,7 @@ public sealed class SaveOnlyTests
         var product = new Product { Name = "Ghost", Price = 1.00m };
 
         await Assert.ThrowsExactlyAsync<InvalidOperationException>(
-            () => db.SaveOnlyAsync(s => s.Save(product, nameof(Product.Price))));
+            () => db.SaveOnlyAsync(s => s.Row(product, nameof(Product.Price))));
     }
 
     // -------------------------------------------------------------------------
@@ -135,13 +135,13 @@ public sealed class SaveOnlyTests
 
         var customer = new Customer { Name = "Carol", Email = "carol@example.com" };
         var product = new Product { Name = "Gadget", Price = 29.99m, StockQuantity = 50 };
-        await db.SaveOnlyAsync(s => { s.Save(customer); s.Save(product); });
+        await db.SaveOnlyAsync(s => { s.Row(customer); s.Row(product); });
 
         var order = new Order { CustomerId = customer.Id, OrderDate = DateTime.UtcNow };
-        await db.SaveOnlyAsync(s => s.Save(order));
+        await db.SaveOnlyAsync(s => s.Row(order));
 
         var line = new OrderLine { OrderId = order.Id, ProductId = product.Id, Quantity = 2, UnitPrice = product.Price };
-        await db.SaveOnlyAsync(s => s.Save(line));
+        await db.SaveOnlyAsync(s => s.Row(line));
 
         await db.SaveOnlyAsync(s => s.Delete(line));
 
@@ -162,7 +162,7 @@ public sealed class SaveOnlyTests
             .Select(i => new Product { Name = $"Product {i}", Price = i * 1.50m, StockQuantity = i * 10 })
             .ToList();
 
-        await db.SaveOnlyAsync(s => s.Save<Product>(products));
+        await db.SaveOnlyAsync(s => s.Rows<Product>(products));
 
         await using var readDb = CreateDb();
         var count = await readDb.Products.CountAsync();
@@ -183,29 +183,29 @@ public sealed class SaveOnlyTests
         var customer = new Customer { Name = "Dave", Email = "dave@example.com" };
         var productA = new Product { Name = "Sprocket", Price = 5.00m, StockQuantity = 200 };
         var productB = new Product { Name = "Cog", Price = 12.50m, StockQuantity = 80 };
-        await db.SaveOnlyAsync(s => { s.Save(customer); s.Save(productA); s.Save(productB); });
+        await db.SaveOnlyAsync(s => { s.Row(customer); s.Row(productA); s.Row(productB); });
 
         // Insert order
         var order = new Order { CustomerId = customer.Id, OrderDate = DateTime.UtcNow, Status = "Pending" };
-        await db.SaveOnlyAsync(s => s.Save(order));
+        await db.SaveOnlyAsync(s => s.Row(order));
 
         // Insert two order lines
         var lineA = new OrderLine { OrderId = order.Id, ProductId = productA.Id, Quantity = 3, UnitPrice = productA.Price };
         var lineB = new OrderLine { OrderId = order.Id, ProductId = productB.Id, Quantity = 1, UnitPrice = productB.Price };
-        await db.SaveOnlyAsync(s => { s.Save(lineA); s.Save(lineB); });
+        await db.SaveOnlyAsync(s => { s.Row(lineA); s.Row(lineB); });
 
         // Reduce stock for both products using column-specific updates
         productA.StockQuantity -= 3;
         productB.StockQuantity -= 1;
         await db.SaveOnlyAsync(s =>
         {
-            s.Save(productA, nameof(Product.StockQuantity));
-            s.Save(productB, nameof(Product.StockQuantity));
+            s.Row(productA, nameof(Product.StockQuantity));
+            s.Row(productB, nameof(Product.StockQuantity));
         });
 
         // Update order status to Shipped
         order.Status = "Shipped";
-        await db.SaveOnlyAsync(s => s.Save(order, nameof(Order.Status)));
+        await db.SaveOnlyAsync(s => s.Row(order, nameof(Order.Status)));
 
         // Verify final state
         await using var readDb = CreateDb();

@@ -6,7 +6,7 @@ public class SaveSet
     private readonly List<(object, string[])> _columnUpdates = [];
     private readonly List<object> _deletes = [];
 
-    public void Save<T>(T entity, params string[] properties) where T : class
+    public void Row<T>(T entity, params string[] properties) where T : class
     {
         if (properties.Any())
         {
@@ -27,7 +27,7 @@ public class SaveSet
         _saves.Add(entity);
     }
 
-    public void Save<T>(IEnumerable<T> entities) where T : class
+    public void Rows<T>(IEnumerable<T> entities) where T : class
     {
         foreach (var entity in entities) SaveInner(entity);
     }
