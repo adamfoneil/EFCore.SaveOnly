@@ -192,7 +192,8 @@ public sealed class SaveOnlyTests
         // Insert two order lines
         var lineA = new OrderLine { OrderId = order.Id, ProductId = productA.Id, Quantity = 3, UnitPrice = productA.Price };
         var lineB = new OrderLine { OrderId = order.Id, ProductId = productB.Id, Quantity = 1, UnitPrice = productB.Price };
-        await db.SaveOnlyAsync(s => { s.Row(lineA); s.Row(lineB); });
+        //await db.SaveOnlyAsync(s => { s.Row(lineA); s.Row(lineB); });
+        await db.SaveOnlyAsync(s => s.Rows([lineA, lineB]));
 
         // Reduce stock for both products using column-specific updates
         productA.StockQuantity -= 3;
