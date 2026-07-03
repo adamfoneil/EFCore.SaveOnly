@@ -17,7 +17,7 @@ await db.SaveOnlyAsync(changes => changes
 	.Row(productB, nameof(Product.StockQuantity), nameof(Product.Description)));
 ```
 
-Let's say you've overriden the normal SaveChanges method on your DbContext -- for example if you pass a user name for auding purposes. You can still do this:
+Let's say you've overriden the normal SaveChanges method on your DbContext -- for example if you pass a user name for auditing purposes. You can still do this:
 
 
 ```csharp
