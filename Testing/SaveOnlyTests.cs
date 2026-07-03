@@ -225,4 +225,43 @@ public sealed class SaveOnlyTests
         Assert.AreEqual(197, savedProductA!.StockQuantity);
         Assert.AreEqual(79, savedProductB!.StockQuantity);
     }
+
+    // -------------------------------------------------------------------------
+    // 8. Parent + child rows inserted in one SaveOnlyAsync call via navigation property
+    // -------------------------------------------------------------------------
+    [TestMethod]
+    public async Task InsertOrderWithLinesInOneOperation()
+    {
+        await using var db = await CreateFreshDbAsync();
+
+        var customer = new Customer { Name = "Eve", Email = "eve@example.com" };
+        var productA = new Product { Name = "Bolt", Price = 2.00m, StockQuantity = 500 };
+        var productB = new Product { Name = "Nut", Price = 1.50m, StockQuantity = 300 };
+        await db.SaveOnlyAsync(s => s.Row(customer).Row(productA).Row(productB));
+
+        var lineA = new OrderLine { ProductId = productA.Id, Quantity = 4, UnitPrice = productA.Price };
+        var lineB = new OrderLine { ProductId = productB.Id, Quantity = 6, UnitPrice = productB.Price };
+        var order = new Order
+        {
+            CustomerId = customer.Id,
+            OrderDate = DateTime.UtcNow,
+            OrderLines = [lineA, lineB]
+        };
+
+        await db.SaveOnlyAsync(s => s.Row(order).Rows(order.OrderLines));
+
+        Assert.AreNotEqual(0, order.Id, "Order Id should be set after insert.");
+        Assert.IsTrue(order.OrderLines.All(l => l.Id != 0), "All OrderLine Ids should be set after insert.");
+        Assert.IsTrue(order.OrderLines.All(l => l.OrderId == order.Id), "All OrderLines should reference the correct OrderId.");
+
+        await using var readDb = CreateDb();
+        var saved = await readDb.Orders
+            .Include(o => o.OrderLines)
+            .FirstAsync(o => o.Id == order.Id);
+
+        Assert.AreEqual(2, saved.OrderLines.Count);
+        var expectedTotal = (4 * 2.00m) + (6 * 1.50m);
+        var actualTotal = saved.OrderLines.Sum(l => l.Quantity * l.UnitPrice);
+        Assert.AreEqual(expectedTotal, actualTotal);
+    }
 }
