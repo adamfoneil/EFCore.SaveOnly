@@ -7,5 +7,3 @@ await db.SaveOnlyAsync(changes =>
   changes.Save(order.Lines);
 });
 ```
-
-This does require that your DbContext implement [IIsNew](https://github.com/adamfoneil/EFCore.SaveOnly/blob/main/EFCore.SaveOnly.Library/IIsNew.cs). This enables the library to differentiate insert and update operations.
