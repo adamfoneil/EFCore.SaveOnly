@@ -21,6 +21,11 @@ public class SaveSet(Func<object, bool> isNew)
 
     private void SaveInner<T>(T entity) where T : class
     {
+        if (entity is System.Collections.IEnumerable)
+            throw new InvalidOperationException(
+                $"Save<T>(T entity) was called with a collection type '{typeof(T).Name}'. " +
+                $"Use Save<TEntity>(IEnumerable<TEntity>) and specify the element type explicitly.");
+
         var insert = _isNew(entity);
         if (insert)
         {
