@@ -32,7 +32,7 @@ public class SaveSet(Func<object, bool> isNew)
         }        
     }
 
-    public void SaveRange<T>(IEnumerable<T> entities) where T : class
+    public void Save<T>(IEnumerable<T> entities) where T : class
     {
         foreach (var entity in entities) SaveInner(entity);
     }

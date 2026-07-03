@@ -32,8 +32,7 @@ public static class SaveOnlyExtension
         {
             if (dbContext.IsNewConvention(entity))
             {
-                throw new InvalidOperationException(
-                    $"Cannot perform a column-specific update on a new entity of type {entity.GetType().Name}. Use Save(entity) without properties.");
+                throw new InvalidOperationException($"Cannot perform a column-specific update on a new entity of type {entity.GetType().Name}. Use Save(entity) without properties.");
             }
 
             EntityEntry entry = AttachState(dbContext, entity, EntityState.Unchanged);
