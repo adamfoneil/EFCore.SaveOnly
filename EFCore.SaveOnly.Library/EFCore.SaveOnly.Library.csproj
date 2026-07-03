@@ -16,6 +16,7 @@
     <PackageTags>efcore</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Description>Pass explicit unit of work delegate to EF Core instead of using its built-in change tracking</Description>
+    <Authors>Adam O'Neil</Authors>
   </PropertyGroup>
 
   <ItemGroup>
