@@ -135,7 +135,7 @@ public sealed class SaveOnlyTests
 
         var customer = new Customer { Name = "Carol", Email = "carol@example.com" };
         var product = new Product { Name = "Gadget", Price = 29.99m, StockQuantity = 50 };
-        await db.SaveOnlyAsync(s => { s.Row(customer); s.Row(product); });
+        await db.SaveOnlyAsync(s => s.Row(customer).Row(product));
 
         var order = new Order { CustomerId = customer.Id, OrderDate = DateTime.UtcNow };
         await db.SaveOnlyAsync(s => s.Row(order));
@@ -183,7 +183,7 @@ public sealed class SaveOnlyTests
         var customer = new Customer { Name = "Dave", Email = "dave@example.com" };
         var productA = new Product { Name = "Sprocket", Price = 5.00m, StockQuantity = 200 };
         var productB = new Product { Name = "Cog", Price = 12.50m, StockQuantity = 80 };
-        await db.SaveOnlyAsync(s => { s.Row(customer); s.Row(productA); s.Row(productB); });
+        await db.SaveOnlyAsync(s => s.Row(customer).Row(productA).Row(productB));
 
         // Insert order
         var order = new Order { CustomerId = customer.Id, OrderDate = DateTime.UtcNow, Status = "Pending" };
@@ -198,11 +198,9 @@ public sealed class SaveOnlyTests
         // Reduce stock for both products using column-specific updates
         productA.StockQuantity -= 3;
         productB.StockQuantity -= 1;
-        await db.SaveOnlyAsync(s =>
-        {
-            s.Row(productA, nameof(Product.StockQuantity));
-            s.Row(productB, nameof(Product.StockQuantity));
-        });
+        await db.SaveOnlyAsync(s => s
+            .Row(productA, nameof(Product.StockQuantity))
+            .Row(productB, nameof(Product.StockQuantity)));
 
         // Update order status to Shipped
         order.Status = "Shipped";

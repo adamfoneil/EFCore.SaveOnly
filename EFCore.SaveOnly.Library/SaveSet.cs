@@ -6,15 +6,16 @@ public class SaveSet
     private readonly List<(object, string[])> _columnUpdates = [];
     private readonly List<object> _deletes = [];
 
-    public void Row<T>(T entity, params string[] properties) where T : class
+    public SaveSet Row<T>(T entity, params string[] properties) where T : class
     {
         if (properties.Any())
         {
             _columnUpdates.Add((entity, properties));
-            return;
+            return this;
         }
 
         SaveInner(entity);
+        return this;
     }
 
     private void SaveInner<T>(T entity) where T : class
@@ -27,14 +28,16 @@ public class SaveSet
         _saves.Add(entity);
     }
 
-    public void Rows<T>(IEnumerable<T> entities) where T : class
+    public SaveSet Rows<T>(IEnumerable<T> entities) where T : class
     {
         foreach (var entity in entities) SaveInner(entity);
+        return this;
     }
 
-    public void Delete<T>(T entity) where T : class
+    public SaveSet Delete<T>(T entity) where T : class
     {
-        _deletes.Add(entity);        
+        _deletes.Add(entity);
+        return this;
     }
 
     public object[] Saves => [.. _saves];
