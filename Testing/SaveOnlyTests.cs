@@ -162,7 +162,7 @@ public sealed class SaveOnlyTests
             .Select(i => new Product { Name = $"Product {i}", Price = i * 1.50m, StockQuantity = i * 10 })
             .ToList();
 
-        await db.SaveOnlyAsync(s => s.Rows<Product>(products));
+        await db.SaveOnlyAsync(s => s.Rows(products));
 
         await using var readDb = CreateDb();
         var count = await readDb.Products.CountAsync();
