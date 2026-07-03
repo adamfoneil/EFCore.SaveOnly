@@ -11,26 +11,22 @@ public static class SaveOnlyExtension
     public static async Task<int> SaveOnlyAsync<TDbContext>(
         this TDbContext dbContext,
         Action<SaveSet> configure,
-        Func<TDbContext, Task<int>> saveDelegate) where TDbContext : DbContext, IIsNew
+        Func<TDbContext, Task<int>> saveDelegate) where TDbContext : DbContext
     {
         dbContext.ChangeTracker.Clear();
 
-        SaveSet saveSet = new(dbContext.IsNewConvention);
+        SaveSet saveSet = new();
         configure.Invoke(saveSet);
 
-        foreach (var ins in saveSet.Inserts)
+        foreach (var entity in saveSet.Saves)
         {
-            AttachState(dbContext, ins, EntityState.Added);
-        }
-
-        foreach (var upd in saveSet.RowUpdates)
-        {
-            AttachState(dbContext, upd, EntityState.Modified);
+            var state = IsNewEntity(dbContext, entity) ? EntityState.Added : EntityState.Modified;
+            AttachState(dbContext, entity, state);
         }
 
         foreach (var (entity, properties) in saveSet.ColumnUpdates)
         {
-            if (dbContext.IsNewConvention(entity))
+            if (IsNewEntity(dbContext, entity))
             {
                 throw new InvalidOperationException($"Cannot perform a column-specific update on a new entity of type {entity.GetType().Name}. Use Save(entity) without properties.");
             }
@@ -56,8 +52,26 @@ public static class SaveOnlyExtension
     /// </summary>
     public static async Task<int> SaveOnlyAsync<TDbContext>(
         this TDbContext dbContext,
-        Action<SaveSet> configure) where TDbContext : DbContext, IIsNew =>
+        Action<SaveSet> configure) where TDbContext : DbContext =>
         await SaveOnlyAsync(dbContext, configure, async db => await db.SaveChangesAsync());
+
+    private static bool IsNewEntity(DbContext dbContext, object entity)
+    {
+        var entityType = dbContext.Model.FindEntityType(entity.GetType())
+            ?? throw new InvalidOperationException($"Type '{entity.GetType().Name}' is not registered in the DbContext model.");
+
+        var primaryKey = entityType.FindPrimaryKey()
+            ?? throw new InvalidOperationException($"Type '{entity.GetType().Name}' has no primary key defined.");
+
+        foreach (var property in primaryKey.Properties)
+        {
+            var value = property.PropertyInfo!.GetValue(entity);
+            var clrDefault = property.ClrType.IsValueType ? Activator.CreateInstance(property.ClrType) : null;
+            if (!Equals(value, clrDefault)) return false;
+        }
+
+        return true;
+    }
 
     private static EntityEntry AttachState(DbContext dbContext, object entity, EntityState state)
     {
