@@ -28,3 +28,5 @@ await db.SaveOnlyAsync(changes => changes
 	.Rows(order.Lines), 
 	async (db) => await db.SaveChangesAsync(user));
 ```
+
+NuGet package: [EFCore.SaveOnly](https://www.nuget.org/packages/EFCore.SaveOnly)
