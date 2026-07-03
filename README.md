@@ -1,10 +1,10 @@
-A persistent pain-point I have with EF Core is behavior around change tracking. I run into a lot of "entity is already tracked" errors, and this project is me losing patience with that. The idea here is a DbContext extension method `SaveOnlyAsync` that lets define a unit of work as part of the SaveChanges call, like this:
+A persistent pain-point I have with EF Core is behavior around change tracking. I run into a lot of "entity is already tracked" errors, and I got tired of that. The idea here is a DbContext extension method `SaveOnlyAsync` that lets you define a unit of work as part of the SaveChanges call, like this. You 
 
 ```csharp
 await db.SaveOnlyAsync(changes =>
 {
-  changes.Add(order);
-  changes.Add(order.Lines);
+  changes.Save(order);
+  changes.Save(order.Lines);
 });
 ```
 
